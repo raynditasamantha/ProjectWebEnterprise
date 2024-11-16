@@ -12,11 +12,14 @@
         <div class="sidebar">
         <h2> Dashboard Penjualan </h2>
             <ul>
-                <li><a href="{{ url('home') }}">Home</a></li>
-                <li><a href="{{ url('produk') }}">Produk</a></li>
+                <li><a href="{{ url(Auth::user()->role.'/home') }}">Home</a></li>
+                <li><a href="{{ url(Auth::user()->role.'/produk') }}">Produk</a></li>
                 <li><a href="#">Penjualan</a></li>
-                <li><a href="#">Laporan</a></li>
-                <li><a href="#">Pengaturan</a></li>
+                <li><a href="{{ url(Auth::user()->role.'/laporan') }}">Laporan</a></li>
+                <form action="{{ url('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="text-decoration-none bg-transparent border-0 text-white" style="font-size: 18px;">Logout</button>
+                </form>
             </ul>
         </div>
         <div>
@@ -27,15 +30,12 @@
                 <h1> Daftar Produk </h1>
                 <p> Temukan produk terbaik untuk kebutuhan anda </p>
                 </div>
-                <div>
-                    <button class="card-button"><a class="text-decoration-none text-wh" href="{{ url('/produk/add') }}">Add Product</a></button>
-                </div>
                 <header>
                 <div>
                     <div class="container">
                         <h1> Edit Product </h1>
-
-                        <form action="{{ url('/produk/edit/' , $ubahproduk->kode_produk) }}" method="POST" enctype="multipart/form-data">
+                        <!-- Form to edit a new produk -->
+                        <form action="{{ url(Auth::user()->role.'/produk/edit/'. $ubahproduk->kode_produk) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         <div class="form-group">
@@ -72,6 +72,3 @@
         </footer>
     </body>
 </html>
-
-
-

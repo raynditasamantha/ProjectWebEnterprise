@@ -5,22 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Produk;
 use App\Http\Requests\StoreProdukRequest;
 use App\Http\Requests\UpdateProdukRequest;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProdukController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-
-    public function index()
+    public function ViewProduk()
     {
-        $produk = Produk::all();
-        return view('produk', ['produk'=> $produk]);
+        $isAdmin = Auth::user()->role == 'admin';
+        $produk = $isAdmin ? Produk::all() : Produk::where('user_id', Auth::user()->id)->get();
+
+        return view('produk', ['produk' => $produk]);
     }
 
     public function CreateProduk(Request $request)
     {
+        //menambahkan variable $filePath untuk mendefinisikan penyimpanan file
         $imageName = null;
         if ($request->hasFile('image')){
             $imageFile = $request->file('image');
@@ -32,10 +36,11 @@ class ProdukController extends Controller
             'deskripsi'=> $request->deskripsi,
             'harga' => $request->harga,
             'jumlah_produk'=> $request->jumlah_produk,
-            'image' => $imageName
+            'image' => $imageName,
+            'user_id' => Auth::user()->id
         ]);
 
-        return redirect('/produk');
+        return redirect(Auth::user()->role.'/produk');
     }
 
     public function ViewAddProduk()
@@ -45,11 +50,12 @@ class ProdukController extends Controller
 
     public function DeleteProduk($kode_produk)
     {
-        produk::where('kode_produk', $kode_produk)->delete();
+        Produk::where('kode_produk', $kode_produk)->delete();
 
-        return redirect('/produk');
+        return redirect(Auth::user()->role.'/produk');
     }
 
+    //Fungsi untuk View Edit Produk
     public function ViewEditProduk($kode_produk)
     {
         $ubahproduk = Produk::where('kode_produk', $kode_produk)->first();
@@ -57,13 +63,14 @@ class ProdukController extends Controller
         return view('editproduk', compact('ubahproduk'));
     }
 
-    public function UpdateProduk(Request $request, $kode_produk)
+    //Fungsi untuk mengubah data produk
+    public function UpdateProduk(Request $request,$kode_produk)
     {
-
+        //menambahkan variable $filePath untuk mendefinisikan penyimpanan file
         $imageName = null;
         if ($request->hasFile('image')) {
             $imageFile = $request->file('image');
-            $imageName = time() . ' ' . $imageFile->getClientOriginalItem();
+            $imageName = time() . ' ' . $imageFile->getClientOriginalName();
             $imageFile->storeAs('public/images', $imageName);
         }
         Produk::where('kode_produk', $kode_produk)->update([
@@ -71,8 +78,29 @@ class ProdukController extends Controller
             'deskripsi' => $request->deskripsi,
             'harga' => $request->harga,
             'jumlah_produk' => $request->jumlah_produk,
-            'image' => $imageName
+            'image' => $imageName,
+            'user_id' => Auth::user()->id
         ]);
-        return redirect('/produk');
+        return redirect(Auth::user()->role.'/produk');
+    }
+
+    public function ViewLaporan()
+    {
+        //mengambil semua data produk
+        $products = Produk::all();
+
+        return view('laporan', ['products' => $products]);
+    }
+
+    public function print()
+    {
+        //mengambil semua data produk
+        $products = Produk::all();
+
+        //load view untuk PDF dengam data produk
+        $pdf = Pdf::loadView('report', compact('products'));
+
+        //menampikan PDF langsung di browser
+        return $pdf->stream('laporan-produk.pdf');
     }
 }
